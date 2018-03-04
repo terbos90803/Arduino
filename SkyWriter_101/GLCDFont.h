@@ -36,34 +36,39 @@ class GLCDFont
       int pixels = 0;
       for (int i = 0; string && *string; ++i, ++string)
       {
-        pixels += pgm_read_byte_near(getGlyphBase(*string));
+        pixels += pgm_read_byte_near(getGlyphBase(*string)) + 1; // add 1 for kerning
       }
       return pixels;
     }
 
-    /// \return width of render in pixels
-    int render(const char *string, uint32_t color, uint32_t *output)
+    /// \return success of render
+    bool render(const char *string, byte fgcolor, byte bgcolor, FrameBuffer &output)
     {
       int x(0);
-      for (int i(0); output && string && *string; ++i, ++string)
+      for (int i(0); string && *string; ++i, ++string)
       {
         const uint8_t *glyph(getGlyphBase(*string));
         int cols(pgm_read_byte_near(glyph));
         for (int col(0); col < cols; ++col, ++x)
         {
-          const uint8_t *fCol(glyph + 1 + col*bpcol);
-          uint32_t *oCol(output + x*height);
+          const uint8_t *fCol(glyph + 1 + col * bpcol);
+          ColumnBuilder column;
           uint8_t b(0);
           for (int y(0); y < height; ++y)
           {
-            if (y%8 == 0)
-              b = pgm_read_byte_near(fCol + y/8);
-            oCol[y] = b&1 ? color : 0;
+            if (y % 8 == 0)
+              b = pgm_read_byte_near(fCol + y / 8);
+            column.addPixel(b & 1 ? fgcolor : bgcolor);
             b >>= 1;
           }
+          output.setColumn(x, column.build());
         }
+
+        // Add 1 pixel of kerning between characters
+        Column kerning(height, bgcolor);
+        output.setColumn(x++, kerning);
       }
-      return x;
+      return true;
     }
 };
 

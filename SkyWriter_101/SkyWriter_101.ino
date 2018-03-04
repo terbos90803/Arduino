@@ -12,20 +12,20 @@
 #include <Adafruit_DotStar.h>
 #include <SPI.h>
 #include "CurieIMU.h"
-//#include "skyfont.h"
+#include "FrameBuffer.h"
 #include "GLCDFont.h"
 #include "Tahoma19x21.h"
 
 const char defaultmessage[] = {
-  "Frank"
-//  "4999  Momentum  4999"
+  "4999  Momentum  4999"
 };
 
-#define NUMPIXELS 72 // Number of LEDs in strip
+const int NUMPIXELS = 72; // Number of LEDs in strip
 
 // Hardware SPI is a little faster, but must be wired to specific pins
 // (Arduino Uno and 101 = pin 11 for data, 13 for clock, other boards are different).
-Adafruit_DotStar strip = Adafruit_DotStar(NUMPIXELS, DOTSTAR_BGR);
+//Adafruit_DotStar strip = Adafruit_DotStar(NUMPIXELS, DOTSTAR_BGR);
+Adafruit_DotStar strip(NUMPIXELS, DOTSTAR_BGR);
 
 enum COLORS {
   BLACK = 0,
@@ -47,36 +47,32 @@ const uint32_t colormap[256] = {
   0xFF00FF, //5 - MAGENTA
   0xFFFF00, //6 - YELLOW
   0xFFFFFF, //7 - WHITE
-  };
-const int MAX_FB_BYTES = 0x4000;  // 16K frame buffer
-byte framebuffer[MAX_FB_BYTES] = {0}; // init frame buffer to 0
-
-// Framebuffer encoding
-// Run Length Encoding with a 2-byte entry
-// b0 = number of pixels in run
-// b1 = index of color
+};
 
 int msgLength = 0;
 int msgWidth = 0;
 int msgHeight = 0;
 int msgMidPixel = 0;
-uint32_t color = RED;
+byte color = RED;
 
 GLCDFont font(Tahoma19x21, 19, 21, Tahoma19x21_firstChar, Tahoma19x21_lastChar);
 
-void renderMessage(const char *message)
+FrameBuffer framebuffer(strip, colormap);
+
+void renderMessage(const char *message, byte fgcolor, byte bgcolor)
 {
   msgLength = strlen(message);
-  if (pixels)
-    free(pixels);
   msgHeight = font.getHeight();
-  int size = font.getWidth(message) * msgHeight;
-  pixels = (uint32_t*)malloc(sizeof(uint32_t) * size);
-  Serial.print("allocated pixel buffer at:");
-  Serial.print((unsigned long)pixels);
-  Serial.print("  size:");
-  Serial.println(size);
-  msgWidth = font.render(message, color, pixels);
+  msgWidth = font.getWidth(message);
+  if (msgWidth > FB_WIDTH || !font.render(message, fgcolor, bgcolor, framebuffer)) {
+    Serial.println("ERROR: Could not render message");
+  }
+  Serial.print("Message chars:");
+  Serial.print(msgLength);
+  Serial.print("  msgHeight:");
+  Serial.print(msgHeight);
+  Serial.print("  msgWidth:");
+  Serial.println(msgWidth);
   msgMidPixel = msgWidth / 2;
 }
 
@@ -85,8 +81,8 @@ void setup() {
   strip.show();  // Turn all LEDs off ASAP
 
   Serial.begin(9600); // initialize Serial communication
-//  while (!Serial);    // wait for the serial port to open.  Prevents sketch from running if not connected to serial monitor.
-  
+  //  while (!Serial);    // wait for the serial port to open.  Prevents sketch from running if not connected to serial monitor.
+
   // initialize device
   Serial.println("Initializing IMU device...");
   CurieIMU.begin();
@@ -95,22 +91,12 @@ void setup() {
   CurieIMU.setGyroRange(1000);
 
   // Render bitmap
-  renderMessage(defaultmessage);
+  renderMessage(defaultmessage, RED, BLACK);
 }
 
-void selectColor(uint32_t c)
+void selectColor(int c)
 {
   color = c;
-}
-
-void displayColumn(int col)
-{
-  uint32_t *pCol(pixels + msgHeight*col);
-  for (int i = 0; i < msgHeight; ++i)
-  {
-    strip.setPixelColor(NUMPIXELS - i - 1, pCol[i]);
-  }
-  strip.show();                     // Refresh strip
 }
 
 void chooseColor()
@@ -161,11 +147,11 @@ void loop() {
 
     if (pixelIndex >= 0 && pixelIndex < msgWidth)
     {
-      displayColumn(pixelIndex);
+      framebuffer.displayColumn(pixelIndex);
     }
     else
     {
-      displayColumn(0);
+      framebuffer.displayColumn(-1);
     }
     ++fwdCount;
   }
@@ -186,11 +172,11 @@ void loop() {
 
     if (pixelIndex >= 0 && pixelIndex < msgWidth)
     {
-      displayColumn(pixelIndex);
+      framebuffer.displayColumn(pixelIndex);
     }
     else
     {
-      displayColumn(0);
+      framebuffer.displayColumn(-1);
     }
     ++revCount;
 
@@ -199,8 +185,6 @@ void loop() {
   {
     // Not swinging (at least not very fast)
 
-      displayColumn(0);
+    framebuffer.displayColumn(-1);
   }
-
-  //delayMicroseconds(1500);
 }
