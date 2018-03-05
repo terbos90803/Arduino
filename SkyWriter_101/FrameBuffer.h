@@ -1,13 +1,9 @@
 #if !defined(FRAMEBUFFER_H)
 #define FRAMEBUFFER_H
 
-// Framebuffer encoding
+// Framebuffer is encoded.
 // Run Length Encoding with a 2-byte entry
-// b0 = number of pixels in run
-// b1 = index of color
 
-const int FB_WIDTH = 300; // max number of columns
-const int FB_RUNS_PER_COL = 10; // max number of runs per column
 
 struct Run {
   byte length;
@@ -20,13 +16,15 @@ struct Run {
 };
 
 struct Column {
+  static const byte RUNS_PER_COL = 10; // max number of runs per column
+
   byte nRuns;
-  Run runs[FB_RUNS_PER_COL];
+  Run runs[RUNS_PER_COL];
 
   // Empty Column
   Column() : nRuns(0)
   {}
-  
+
   //Solid color Column
   Column(int height, byte color)
     : nRuns(1)
@@ -41,7 +39,7 @@ class ColumnBuilder {
 
     void pushRun()
     {
-      if (col.nRuns < FB_RUNS_PER_COL)
+      if (col.nRuns < Column::RUNS_PER_COL)
       {
         col.runs[col.nRuns++] = run;
       }
@@ -68,15 +66,21 @@ class ColumnBuilder {
 
 class FrameBuffer
 {
+    static const int FB_WIDTH = 300; // max number of columns
+
     Column columns[FB_WIDTH];
     Adafruit_DotStar & strip;
-    const uint32_t (&colormap)[256];
+    const uint32_t *colormap;
     const int lastPixel;
 
   public:
-    FrameBuffer(Adafruit_DotStar & _strip, const uint32_t (&_colormap)[256])
+    FrameBuffer(Adafruit_DotStar & _strip, const uint32_t *_colormap)
       : strip(_strip), colormap(_colormap), lastPixel(strip.numPixels() - 1)
+    {}
+
+    int getWidth() const
     {
+      return FB_WIDTH;
     }
 
     void setColumn(int nCol, const Column &col)
@@ -90,15 +94,14 @@ class FrameBuffer
       if (nCol >= 0 && nCol < FB_WIDTH)
       {
         const Column &col = columns[nCol];
-        for (int r = 0, y = 0; r < col.nRuns; ++r)
+        uint16_t pix = lastPixel;
+        for (int r = 0; r < col.nRuns; ++r)
         {
           const Run &run = col.runs[r];
           int runlength = run.length;
           uint32_t c = colormap[run.color];
-          for (int p = 0; p < runlength; ++p, ++y) {
-            int pix = lastPixel - y;
-            if (pix >= 0)
-              strip.setPixelColor(pix, c);
+          for (int p = 0; p < runlength; ++p, --pix) {
+            strip.setPixelColor(pix, c);
           }
         }
       }

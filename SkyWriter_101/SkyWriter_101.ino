@@ -19,12 +19,17 @@
 const char defaultmessage[] = {
   "4999  Momentum  4999"
 };
+const char fgcolors[] = {
+  "88887799999999778888"
+};
+const char bgcolors[] = {
+  "00000000000000000000"
+};
 
 const int NUMPIXELS = 72; // Number of LEDs in strip
 
 // Hardware SPI is a little faster, but must be wired to specific pins
 // (Arduino Uno and 101 = pin 11 for data, 13 for clock, other boards are different).
-//Adafruit_DotStar strip = Adafruit_DotStar(NUMPIXELS, DOTSTAR_BGR);
 Adafruit_DotStar strip(NUMPIXELS, DOTSTAR_BGR);
 
 enum COLORS {
@@ -35,10 +40,12 @@ enum COLORS {
   CYAN  = 4,
   MAGENTA = 5,
   YELLOW = 6,
-  WHITE = 7
+  WHITE = 7,
+  MO_BLUE = 8,
+  MO_PURPLE = 9
 };
 
-const uint32_t colormap[256] = {
+const uint32_t colormap[] = {
   0x000000, //0 - BLACK
   0xFF0000, //1 - RED
   0x00FF00, //2 - GREEN
@@ -47,25 +54,24 @@ const uint32_t colormap[256] = {
   0xFF00FF, //5 - MAGENTA
   0xFFFF00, //6 - YELLOW
   0xFFFFFF, //7 - WHITE
+  0x06CEFF, //8 - MOMENTUM BLUE
+  0x9F01FF, //9 - MOMENTUM PURPLE
 };
 
 int msgLength = 0;
 int msgWidth = 0;
 int msgHeight = 0;
 int msgMidPixel = 0;
-byte color = RED;
-
-GLCDFont font(Tahoma19x21, 19, 21, Tahoma19x21_firstChar, Tahoma19x21_lastChar);
 
 FrameBuffer framebuffer(strip, colormap);
 
 void renderMessage(const char *message, byte fgcolor, byte bgcolor)
 {
   msgLength = strlen(message);
-  msgHeight = font.getHeight();
-  msgWidth = font.getWidth(message);
-  if (msgWidth > FB_WIDTH || !font.render(message, fgcolor, bgcolor, framebuffer)) {
-    Serial.println("ERROR: Could not render message");
+  msgHeight = tahoma.getHeight();
+  msgWidth = tahoma.render(message, fgcolors, bgcolors, framebuffer);
+  if (msgWidth > framebuffer.getWidth()) {
+    Serial.println("ERROR: Message is larger than framebuffer");
   }
   Serial.print("Message chars:");
   Serial.print(msgLength);
@@ -94,6 +100,7 @@ void setup() {
   renderMessage(defaultmessage, RED, BLACK);
 }
 
+#if 0
 void selectColor(int c)
 {
   color = c;
@@ -117,6 +124,7 @@ void chooseColor()
       break;
   }
 }
+#endif
 
 void loop() {
   static int fwdStartPixel = 0;
