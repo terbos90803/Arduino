@@ -39,6 +39,8 @@ struct Message {
 };
 const byte nMessages = sizeof(g_messages) / sizeof(g_messages[0]);
 char g_message[32] = "";
+char g_msgfg[32] = "77777777777777777777";
+char g_msgbg[32] = "00000000000000000000";
 
 const int NUMPIXELS = 72; // Number of LEDs in strip
 
@@ -101,8 +103,8 @@ void renderMessage(byte msgSelection)
   }
   else if (*g_message) {
     message = g_message;
-    fgcolors = g_messages[0].fgcolors;
-    bgcolors = g_messages[0].bgcolors;
+    fgcolors = g_msgfg;
+    bgcolors = g_msgbg;
   }
   msgLength = strlen(message);
   msgHeight = tahoma.getHeight();
@@ -277,7 +279,9 @@ void customMsgWritten(BLEDevice central, BLECharacteristic characteristic) {
   // central wrote new value to characteristic, update message
   Serial.print("Characteristic event, written: ");
 
-  strcpy(g_message, (const char *)customMsg.value());
+  int len = customMsg.valueLength();
+  strncpy(g_message, (const char *)customMsg.value(), len);
+  g_message[len] = 0;
   renderMessage(-1);
 }
 
