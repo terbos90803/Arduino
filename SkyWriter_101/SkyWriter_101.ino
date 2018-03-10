@@ -14,7 +14,8 @@
 #include <CurieBLE.h>
 #include "FrameBuffer.h"
 #include "GLCDFont.h"
-#include "Tahoma19x21.h"
+//#include "Tahoma19x21.h"
+#include "ComicSans21x25.h"
 
 struct Message {
   const char message[32];
@@ -38,7 +39,7 @@ struct Message {
   }
 };
 const byte nMessages = sizeof(g_messages) / sizeof(g_messages[0]);
-char g_message[32] = "";
+char g_message[32] = "Custom";
 char g_msgfg[32] = "77777777777777777777";
 char g_msgbg[32] = "00000000000000000000";
 
@@ -57,6 +58,8 @@ BLEDescriptor msgDesc("411acab3-23af-4a05-9bb7-35eaec0a7bb2", "Selector");
 // Custom service
 BLEService customService("7f4f6376-e0fa-45a3-ae89-47f162c30518"); // create service
 BLECharacteristic customMsg("7f4f6376-e0fa-45a3-ae89-47f162c30518", BLERead | BLEWrite, 20);
+BLECharacteristic customFG("8e818756-e307-40b9-8217-f279bea0af1e", BLERead | BLEWrite, 20);
+BLECharacteristic customBG("4c56472a-cd05-4aec-b9c5-9afa90c37ec9", BLERead | BLEWrite, 20);
 BLEDescriptor customDesc("7f4f6376-e0fa-45a3-ae89-47f162c30518", "Custom");
 
 enum COLORS {
@@ -107,8 +110,10 @@ void renderMessage(byte msgSelection)
     bgcolors = g_msgbg;
   }
   msgLength = strlen(message);
-  msgHeight = tahoma.getHeight();
-  msgWidth = tahoma.render(message, fgcolors, bgcolors, framebuffer);
+  //msgHeight = tahoma.getHeight();
+  //msgWidth = tahoma.render(message, fgcolors, bgcolors, framebuffer);
+  msgHeight = comicsans.getHeight();
+  msgWidth = comicsans.render(message, fgcolors, bgcolors, framebuffer);
   if (msgWidth > framebuffer.getWidth()) {
     Serial.println("ERROR: Message is larger than framebuffer");
   }
@@ -138,6 +143,8 @@ void BLEsetup()
   BLE.addService(msgService);
   customMsg.addDescriptor(customDesc);
   customService.addCharacteristic(customMsg);
+  customService.addCharacteristic(customFG);
+  customService.addCharacteristic(customBG);
   BLE.addService(customService);
   
   // assign event handlers for connected, disconnected to peripheral
@@ -151,8 +158,11 @@ void BLEsetup()
 
   // assign event handlers for characteristic
   customMsg.setEventHandler(BLEWritten, customMsgWritten);
-  // set an initial value for the characteristic
-  customMsg.setValue("custom");
+  customMsg.setValue(g_message); // set an initial value for the characteristic
+  customFG.setEventHandler(BLEWritten, customFGWritten);
+  customFG.setValue(g_msgfg); // set an initial value for the characteristic
+  customBG.setEventHandler(BLEWritten, customBGWritten);
+  customBG.setValue(g_msgbg); // set an initial value for the characteristic
 
   // advertise the service
   BLE.advertise();
@@ -282,6 +292,26 @@ void customMsgWritten(BLEDevice central, BLECharacteristic characteristic) {
   int len = customMsg.valueLength();
   strncpy(g_message, (const char *)customMsg.value(), len);
   g_message[len] = 0;
+  renderMessage(-1);
+}
+
+void customFGWritten(BLEDevice central, BLECharacteristic characteristic) {
+  // central wrote new value to characteristic, update message
+  Serial.print("Characteristic event, written: ");
+
+  int len = customFG.valueLength();
+  strncpy(g_msgfg, (const char *)customFG.value(), len);
+  g_msgfg[len] = 0;
+  renderMessage(-1);
+}
+
+void customBGWritten(BLEDevice central, BLECharacteristic characteristic) {
+  // central wrote new value to characteristic, update message
+  Serial.print("Characteristic event, written: ");
+
+  int len = customBG.valueLength();
+  strncpy(g_msgbg, (const char *)customBG.value(), len);
+  g_msgbg[len] = 0;
   renderMessage(-1);
 }
 

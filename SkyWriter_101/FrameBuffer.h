@@ -39,7 +39,7 @@ class ColumnBuilder {
 
     void pushRun()
     {
-      if (col.nRuns < Column::RUNS_PER_COL)
+      if (run.length > 0 && col.nRuns < Column::RUNS_PER_COL)
       {
         col.runs[col.nRuns++] = run;
       }
