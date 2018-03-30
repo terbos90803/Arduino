@@ -16,6 +16,7 @@
 #include "GLCDFont.h"
 //#include "Tahoma19x21.h"
 #include "ComicSans21x25.h"
+#include "MomentumLogo.h"
 
 struct Message {
   const char message[32];
@@ -51,16 +52,15 @@ Adafruit_DotStar strip(NUMPIXELS, DOTSTAR_BGR);
 
 
 //BLEPeripheral blePeripheral; // create peripheral instance
-// Selector service
+// Message service
 BLEService msgService("411acab3-23af-4a05-9bb7-35eaec0a7bb2"); // create service
 BLEUnsignedCharCharacteristic msgSelector("411acab3-23af-4a05-9bb7-35eaec0a7bb2", BLERead | BLEWrite);
 BLEDescriptor msgDesc("411acab3-23af-4a05-9bb7-35eaec0a7bb2", "Selector");
-// Custom service
-BLEService customService("7f4f6376-e0fa-45a3-ae89-47f162c30518"); // create service
+// Custom message
 BLECharacteristic customMsg("7f4f6376-e0fa-45a3-ae89-47f162c30518", BLERead | BLEWrite, 20);
+BLEDescriptor customDesc("7f4f6376-e0fa-45a3-ae89-47f162c30518", "Custom");
 BLECharacteristic customFG("8e818756-e307-40b9-8217-f279bea0af1e", BLERead | BLEWrite, 20);
 BLECharacteristic customBG("4c56472a-cd05-4aec-b9c5-9afa90c37ec9", BLERead | BLEWrite, 20);
-BLEDescriptor customDesc("7f4f6376-e0fa-45a3-ae89-47f162c30518", "Custom");
 
 enum COLORS {
   BLACK = 0,
@@ -88,12 +88,9 @@ const uint32_t colormap[] = {
   0x9F01FF, //9 - MOMENTUM PURPLE
 };
 
-int msgLength = 0;
-int msgWidth = 0;
-int msgHeight = 0;
-int msgMidPixel = 0;
-
 FrameBuffer framebuffer(strip, colormap);
+RASTER_MomentumLogo;
+Display *display = &MomentumLogoRaster; //&framebuffer;
 
 void renderMessage(byte msgSelection)
 {
@@ -109,12 +106,12 @@ void renderMessage(byte msgSelection)
     fgcolors = g_msgfg;
     bgcolors = g_msgbg;
   }
-  msgLength = strlen(message);
+  int msgLength = strlen(message);
   //msgHeight = tahoma.getHeight();
   //msgWidth = tahoma.render(message, fgcolors, bgcolors, framebuffer);
-  msgHeight = comicsans.getHeight();
-  msgWidth = comicsans.render(message, fgcolors, bgcolors, framebuffer);
-  if (msgWidth > framebuffer.getWidth()) {
+  int msgHeight = comicsans.getHeight();
+  int msgWidth = comicsans.render(message, fgcolors, bgcolors, framebuffer);
+  if (msgWidth > framebuffer.getMaxWidth()) {
     Serial.println("ERROR: Message is larger than framebuffer");
   }
   Serial.print("Message chars:");
@@ -123,30 +120,27 @@ void renderMessage(byte msgSelection)
   Serial.print(msgHeight);
   Serial.print("  msgWidth:");
   Serial.println(msgWidth);
-  msgMidPixel = msgWidth / 2;
 }
 
 void BLEsetup()
 {
   BLE.begin();
-  
+
   // set the local name peripheral advertises.  Up to 8 chars.
   BLE.setLocalName("SkyWrite");
   BLE.setDeviceName("SkyWriter 101");
   // set the UUID for the service this peripheral advertises
   BLE.setAdvertisedService(msgService);
-  BLE.setAdvertisedService(customService);
 
   // add service and characteristic
   msgSelector.addDescriptor(msgDesc);
   msgService.addCharacteristic(msgSelector);
-  BLE.addService(msgService);
   customMsg.addDescriptor(customDesc);
-  customService.addCharacteristic(customMsg);
-  customService.addCharacteristic(customFG);
-  customService.addCharacteristic(customBG);
-  BLE.addService(customService);
-  
+  msgService.addCharacteristic(customMsg);
+  msgService.addCharacteristic(customFG);
+  msgService.addCharacteristic(customBG);
+  BLE.addService(msgService);
+
   // assign event handlers for connected, disconnected to peripheral
   BLE.setEventHandler(BLEConnected, blePeripheralConnectHandler);
   BLE.setEventHandler(BLEDisconnected, blePeripheralDisconnectHandler);
@@ -196,10 +190,14 @@ void loop() {
   static unsigned int revCount = 0;
 
   float gx, gy, gz; //scaled Gyro values
+  unsigned long startTime = micros();
 
   // read gyro measurements from device, scaled to the configured range
   CurieIMU.readGyroScaled(gx, gy, gz);
   const int gyro = -gz;
+
+  int dispWidth = display->getWidth();
+  int dispMidPixel = dispWidth / 2;
 
   if (gyro > 100)
   {
@@ -209,21 +207,14 @@ void loop() {
     {
       // Analyze last reverse swing
       int midPixel = revCount / 2;
-      revStartPixel = midPixel - msgMidPixel;
+      revStartPixel = midPixel - dispMidPixel;
     }
     revCount = 0;
 
 
     int pixelIndex = fwdCount - fwdStartPixel; // Calculate the pixel index into the message
 
-    if (pixelIndex >= 0 && pixelIndex < msgWidth)
-    {
-      framebuffer.displayColumn(pixelIndex);
-    }
-    else
-    {
-      framebuffer.displayColumn(-1);
-    }
+    display->displayColumn(pixelIndex);
     ++fwdCount;
   }
   else if (gyro < -100)
@@ -234,33 +225,28 @@ void loop() {
     {
       // Analyze last forward swing
       int midPixel = fwdCount / 2;
-      fwdStartPixel = midPixel - msgMidPixel;
+      fwdStartPixel = midPixel - dispMidPixel;
     }
     fwdCount = 0;
 
 
-    int pixelIndex = msgWidth - (revCount - revStartPixel); // Calculate the pixel index into the message
+    int pixelIndex = dispWidth - (revCount - revStartPixel); // Calculate the pixel index into the message
 
-    if (pixelIndex >= 0 && pixelIndex < msgWidth)
-    {
-      framebuffer.displayColumn(pixelIndex);
-    }
-    else
-    {
-      framebuffer.displayColumn(-1);
-    }
+    display->displayColumn(pixelIndex);
     ++revCount;
 
   }
   else
   {
     // Not swinging (at least not very fast)
-
-    framebuffer.displayColumn(-1);
+    display->displayColumn(-1);
   }
 
   // poll peripheral
   BLE.poll();
+
+  while (micros() - startTime < 1800)
+    ; // wait for at least a minimum usecs
 }
 
 void blePeripheralConnectHandler(BLEDevice central) {

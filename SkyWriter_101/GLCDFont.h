@@ -29,7 +29,7 @@ class GLCDFont
       Column kerning(height, bgcolor);
 
       const uint8_t *glyph(getGlyphBase(c));
-      int cols(pgm_read_byte_near(glyph));
+      int cols(pgm_read_byte(glyph));
       for (int col = 0; col < cols; ++col)
       {
         const uint8_t *fCol(glyph + 1 + col * bpcol); // base of glyph, skip length byte, index by column
@@ -38,7 +38,7 @@ class GLCDFont
         for (int y = 0; y < height; ++y)
         {
           if (y % 8 == 0)
-            b = pgm_read_byte_near(fCol + y / 8);
+            b = pgm_read_byte(fCol + y / 8);
           column.addPixel(b & 1 ? fgcolor : bgcolor);
           b >>= 1;
         }
@@ -66,7 +66,7 @@ class GLCDFont
       int pixels = 0;
       for (; string && *string; ++string)
       {
-        pixels += pgm_read_byte_near(getGlyphBase(*string)) + 1; // add 1 for kerning
+        pixels += pgm_read_byte(getGlyphBase(*string)) + 1; // add 1 for kerning
       }
       return pixels;
     }

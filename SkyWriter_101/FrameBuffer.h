@@ -1,6 +1,8 @@
 #if !defined(FRAMEBUFFER_H)
 #define FRAMEBUFFER_H
 
+#include "Display.h"
+
 // Framebuffer is encoded.
 // Run Length Encoding with a 2-byte entry
 
@@ -64,7 +66,7 @@ class ColumnBuilder {
     }
 };
 
-class FrameBuffer
+class FrameBuffer : public Display
 {
     static const int FB_WIDTH = 300; // max number of columns
 
@@ -72,15 +74,26 @@ class FrameBuffer
     Adafruit_DotStar & strip;
     const uint32_t *colormap;
     const int lastPixel;
+    int width;
 
   public:
     FrameBuffer(Adafruit_DotStar & _strip, const uint32_t *_colormap)
       : strip(_strip), colormap(_colormap), lastPixel(strip.numPixels() - 1)
     {}
 
-    int getWidth() const
+    int getMaxWidth() const
     {
       return FB_WIDTH;
+    }
+
+    void setWidth(int newWidth)
+    {
+      width = newWidth;
+    }
+    
+    virtual int getWidth() const
+    {
+      return width;
     }
 
     void setColumn(int nCol, const Column &col)
