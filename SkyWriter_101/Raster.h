@@ -27,6 +27,11 @@ class Raster : public Display
       return width;
     }
 
+    virtual unsigned long getColumnTime() const
+    {
+      return 1800;
+    }
+
     void displayColumn(int nCol) const
     {
       if (nCol >= 0 && nCol < width)

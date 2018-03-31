@@ -79,6 +79,7 @@ class GLCDFont
       {
         renderGlyph(x, *string, fgcolor, bgcolor, output);
       }
+      output.setWidth(x);
       return x;
     }
 
@@ -92,6 +93,7 @@ class GLCDFont
         byte bgcolor = *bgcolors - '0';
         renderGlyph(x, *string, fgcolor, bgcolor, output);
       }
+      output.setWidth(x);
       return x;
     }
 

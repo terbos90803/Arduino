@@ -13,36 +13,8 @@
 #include <CurieIMU.h>
 #include <CurieBLE.h>
 #include "FrameBuffer.h"
-#include "GLCDFont.h"
-//#include "Tahoma19x21.h"
-#include "ComicSans21x25.h"
 #include "MomentumLogo.h"
-
-struct Message {
-  const char message[32];
-  const char fgcolors[32];
-  const char bgcolors[32];
-} const g_messages[] = {
-  {
-    "4999  Momentum  4999",
-    "88887799999999778888",
-    "00000000000000000000"
-  },
-  {
-    "4999  Momentum  4999",
-    "88887700000000778888",
-    "00000099999999000000"
-  },
-  {
-    "Go Go  Mo Mo",
-    "888888999999",
-    "000000000000"
-  }
-};
-const byte nMessages = sizeof(g_messages) / sizeof(g_messages[0]);
-char g_message[32] = "Custom";
-char g_msgfg[32] = "77777777777777777777";
-char g_msgbg[32] = "00000000000000000000";
+#include "Displayable.h"
 
 const int NUMPIXELS = 72; // Number of LEDs in strip
 
@@ -50,12 +22,12 @@ const int NUMPIXELS = 72; // Number of LEDs in strip
 // (Arduino Uno and 101 = pin 11 for data, 13 for clock, other boards are different).
 Adafruit_DotStar strip(NUMPIXELS, DOTSTAR_BGR);
 
-
-//BLEPeripheral blePeripheral; // create peripheral instance
 // Message service
 BLEService msgService("411acab3-23af-4a05-9bb7-35eaec0a7bb2"); // create service
 BLEUnsignedCharCharacteristic msgSelector("411acab3-23af-4a05-9bb7-35eaec0a7bb2", BLERead | BLEWrite);
-BLEDescriptor msgDesc("411acab3-23af-4a05-9bb7-35eaec0a7bb2", "Selector");
+BLEDescriptor msgSelDesc("411acab3-23af-4a05-9bb7-35eaec0a7bb2", "Selector");
+BLEUnsignedCharCharacteristic msgNumPresets("4f504ffd-2db6-4b53-96cd-804988d27cda", BLERead);
+BLEDescriptor msgNumPresetsDesc("4f504ffd-2db6-4b53-96cd-804988d27cda", "Number of Presets");
 // Custom message
 BLECharacteristic customMsg("7f4f6376-e0fa-45a3-ae89-47f162c30518", BLERead | BLEWrite, 20);
 BLEDescriptor customDesc("7f4f6376-e0fa-45a3-ae89-47f162c30518", "Custom");
@@ -88,39 +60,27 @@ const uint32_t colormap[] = {
   0x9F01FF, //9 - MOMENTUM PURPLE
 };
 
-FrameBuffer framebuffer(strip, colormap);
-RASTER_MomentumLogo;
-Display *display = &MomentumLogoRaster; //&framebuffer;
+char g_message[32] = "Custom";
+char g_msgfg[32] = "77777777777777777777";
+char g_msgbg[32] = "00000000000000000000";
 
-void renderMessage(byte msgSelection)
-{
-  const char *message = NULL, *fgcolors = NULL, *bgcolors = NULL;
-  if (msgSelection < nMessages)
-  {
-    message = g_messages[msgSelection].message;
-    fgcolors = g_messages[msgSelection].fgcolors;
-    bgcolors = g_messages[msgSelection].bgcolors;
-  }
-  else if (*g_message) {
-    message = g_message;
-    fgcolors = g_msgfg;
-    bgcolors = g_msgbg;
-  }
-  int msgLength = strlen(message);
-  //msgHeight = tahoma.getHeight();
-  //msgWidth = tahoma.render(message, fgcolors, bgcolors, framebuffer);
-  int msgHeight = comicsans.getHeight();
-  int msgWidth = comicsans.render(message, fgcolors, bgcolors, framebuffer);
-  if (msgWidth > framebuffer.getMaxWidth()) {
-    Serial.println("ERROR: Message is larger than framebuffer");
-  }
-  Serial.print("Message chars:");
-  Serial.print(msgLength);
-  Serial.print("  msgHeight:");
-  Serial.print(msgHeight);
-  Serial.print("  msgWidth:");
-  Serial.println(msgWidth);
-}
+FrameBuffer framebuffer(strip, colormap);
+TextMessage customTextMsg(framebuffer, g_message, g_msgfg, g_msgbg);
+RASTER_MomentumLogo;
+
+TextMessage preset0(framebuffer,
+                    "4999  Momentum  4999",
+                    "88887799999999778888",
+                    "00000000000000000000");
+TextMessage preset1(framebuffer,
+                    "Go Go  Mo Mo",
+                    "888888999999",
+                    "000000000000");
+Image preset2(MomentumLogoRaster);
+
+Displayable * presets[] = { &preset0, &preset1, &preset2 };
+const byte nPresets = sizeof(presets) / sizeof(presets[0]);
+const Display *display = 0;
 
 void BLEsetup()
 {
@@ -133,8 +93,10 @@ void BLEsetup()
   BLE.setAdvertisedService(msgService);
 
   // add service and characteristic
-  msgSelector.addDescriptor(msgDesc);
+  msgSelector.addDescriptor(msgSelDesc);
   msgService.addCharacteristic(msgSelector);
+  msgNumPresets.addDescriptor(msgNumPresetsDesc);
+  msgService.addCharacteristic(msgNumPresets);
   customMsg.addDescriptor(customDesc);
   msgService.addCharacteristic(customMsg);
   msgService.addCharacteristic(customFG);
@@ -149,6 +111,7 @@ void BLEsetup()
   msgSelector.setEventHandler(BLEWritten, msgCharacteristicWritten);
   // set an initial value for the characteristic
   msgSelector.setValue(0);
+  msgNumPresets.setValue(nPresets);
 
   // assign event handlers for characteristic
   customMsg.setEventHandler(BLEWritten, customMsgWritten);
@@ -179,8 +142,7 @@ void setup() {
 
   BLEsetup();
 
-  // Render bitmap
-  renderMessage(0);
+  display = presets[0]->selectDisplay();
 }
 
 void loop() {
@@ -234,7 +196,6 @@ void loop() {
 
     display->displayColumn(pixelIndex);
     ++revCount;
-
   }
   else
   {
@@ -245,7 +206,8 @@ void loop() {
   // poll peripheral
   BLE.poll();
 
-  while (micros() - startTime < 1800)
+  unsigned long minWait = display->getColumnTime();
+  while (micros() - startTime < minWait)
     ; // wait for at least a minimum usecs
 }
 
@@ -268,7 +230,8 @@ void msgCharacteristicWritten(BLEDevice central, BLECharacteristic characteristi
   byte selection = msgSelector.value();
   Serial.print("New message: ");
   Serial.println(selection);
-  renderMessage(selection);
+  if (selection < nPresets)
+    display = presets[selection]->selectDisplay();
 }
 
 void customMsgWritten(BLEDevice central, BLECharacteristic characteristic) {
@@ -278,7 +241,7 @@ void customMsgWritten(BLEDevice central, BLECharacteristic characteristic) {
   int len = customMsg.valueLength();
   strncpy(g_message, (const char *)customMsg.value(), len);
   g_message[len] = 0;
-  renderMessage(-1);
+  display = customTextMsg.selectDisplay();
 }
 
 void customFGWritten(BLEDevice central, BLECharacteristic characteristic) {
@@ -288,7 +251,7 @@ void customFGWritten(BLEDevice central, BLECharacteristic characteristic) {
   int len = customFG.valueLength();
   strncpy(g_msgfg, (const char *)customFG.value(), len);
   g_msgfg[len] = 0;
-  renderMessage(-1);
+  display = customTextMsg.selectDisplay();
 }
 
 void customBGWritten(BLEDevice central, BLECharacteristic characteristic) {
@@ -298,6 +261,6 @@ void customBGWritten(BLEDevice central, BLECharacteristic characteristic) {
   int len = customBG.valueLength();
   strncpy(g_msgbg, (const char *)customBG.value(), len);
   g_msgbg[len] = 0;
-  renderMessage(-1);
+  display = customTextMsg.selectDisplay();
 }
 

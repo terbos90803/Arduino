@@ -90,10 +90,15 @@ class FrameBuffer : public Display
     {
       width = newWidth;
     }
-    
+
     virtual int getWidth() const
     {
       return width;
+    }
+
+    virtual unsigned long getColumnTime() const
+    {
+      return 0;
     }
 
     void setColumn(int nCol, const Column &col)
@@ -104,7 +109,7 @@ class FrameBuffer : public Display
 
     void displayColumn(int nCol) const
     {
-      if (nCol >= 0 && nCol < FB_WIDTH)
+      if (nCol >= 0 && nCol < width)
       {
         const Column &col = columns[nCol];
         uint16_t pix = lastPixel;
