@@ -81,6 +81,7 @@ Image preset2(MomentumLogoRaster);
 Displayable * presets[] = { &preset0, &preset1, &preset2 };
 const byte nPresets = sizeof(presets) / sizeof(presets[0]);
 const Display *display = 0;
+int rotatePreset = 0;
 
 void BLEsetup()
 {
@@ -209,6 +210,17 @@ void loop() {
   unsigned long minWait = display->getColumnTime();
   while (micros() - startTime < minWait)
     ; // wait for at least a minimum usecs
+
+  // Rotate the display presets every 10 seconds
+  // This will be the default behavior on boot
+  // Changing any setting via the BTLE connection will disable the rotation
+  if (rotatePreset >= 0) {
+    int newPreset = millis() / 10000 % nPresets;
+    if (newPreset != rotatePreset) {
+      rotatePreset = newPreset;
+      display = presets[rotatePreset]->selectDisplay();
+    }
+  }
 }
 
 void blePeripheralConnectHandler(BLEDevice central) {
@@ -232,6 +244,7 @@ void msgCharacteristicWritten(BLEDevice central, BLECharacteristic characteristi
   Serial.println(selection);
   if (selection < nPresets)
     display = presets[selection]->selectDisplay();
+  rotatePreset = -1;
 }
 
 void customMsgWritten(BLEDevice central, BLECharacteristic characteristic) {
@@ -242,6 +255,7 @@ void customMsgWritten(BLEDevice central, BLECharacteristic characteristic) {
   strncpy(g_message, (const char *)customMsg.value(), len);
   g_message[len] = 0;
   display = customTextMsg.selectDisplay();
+  rotatePreset = -1;
 }
 
 void customFGWritten(BLEDevice central, BLECharacteristic characteristic) {
@@ -252,6 +266,7 @@ void customFGWritten(BLEDevice central, BLECharacteristic characteristic) {
   strncpy(g_msgfg, (const char *)customFG.value(), len);
   g_msgfg[len] = 0;
   display = customTextMsg.selectDisplay();
+  rotatePreset = -1;
 }
 
 void customBGWritten(BLEDevice central, BLECharacteristic characteristic) {
@@ -262,5 +277,5 @@ void customBGWritten(BLEDevice central, BLECharacteristic characteristic) {
   strncpy(g_msgbg, (const char *)customBG.value(), len);
   g_msgbg[len] = 0;
   display = customTextMsg.selectDisplay();
+  rotatePreset = -1;
 }
-
