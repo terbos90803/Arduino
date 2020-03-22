@@ -1,6 +1,6 @@
 /***************************************************
   ToastTimer
-  
+
   A Toastmaster speech timer
 
 ****************************************************/
@@ -15,15 +15,23 @@ NumericDisplay display;
 Stoplight stoplight;
 
 void setup() {
+  Serial.begin(9600);
+  Serial.println("ToastTimer");
+
+  display.begin();
+  stoplight.begin();
 }
 
 int count = 0;
 
 void loop() {
 
-  display.print(getBatteryVoltage());
+  float batt = getBatteryVoltage();
+  Serial.println(batt);
+  display.print(batt);
   delay(500);
 
+#if 1
   switch (count++ % 4) {
     case 0:
       stoplight.set(Stoplight::SL_OFF);
@@ -38,5 +46,6 @@ void loop() {
       stoplight.set(Stoplight::SL_GREEN);
       break;
   }
+#endif
 
 }

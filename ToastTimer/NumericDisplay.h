@@ -12,7 +12,7 @@ class NumericDisplay {
     Adafruit_7segment matrix = Adafruit_7segment();
 
   public:
-    NumericDisplay() {
+    void begin() {
       // 7-seg matrix
       matrix.begin(0x70);
     }

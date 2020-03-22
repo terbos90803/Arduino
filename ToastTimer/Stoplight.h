@@ -17,12 +17,10 @@ class Stoplight {
     //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
     Adafruit_NeoPixel strip = Adafruit_NeoPixel(LENGTH, PIN, NEO_GRB + NEO_KHZ800);
 
-    Adafruit_7segment matrix = Adafruit_7segment();
-
   public:
     enum Stoplight_e {SL_OFF, SL_RED, SL_YELLOW, SL_GREEN};
 
-    Stoplight() {
+    void begin() {
       // NeoPixels
       strip.begin();
       strip.setBrightness(50);
@@ -34,7 +32,7 @@ class Stoplight {
 
       switch (state) {
         case SL_RED:
-          strip.fill(strip.Color(255, 0, 0), 0, 3);
+          strip.fill(strip.Color(255, 0, 0), 5, 3);
           break;
 
         case SL_YELLOW:
@@ -42,7 +40,7 @@ class Stoplight {
           break;
 
         case SL_GREEN:
-          strip.fill(strip.Color(0, 255, 0), 5, 3);
+          strip.fill(strip.Color(0, 255, 0), 0, 3);
           break;
       }
       strip.show();
