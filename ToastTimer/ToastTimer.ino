@@ -35,11 +35,7 @@ void setup() {
   stoplight.begin();
 }
 
-int count = 0;
-
 void loop() {
-
-#if 1
 
   switch (mode) {
     case M_SELECT:
@@ -104,46 +100,6 @@ void loop() {
       mode = M_SELECT;
       break;
   }
-
-#elif 1
-
-  if (buttons.getGray()) {
-    stoplight.set(Stoplight::SL_YELLOW);
-  } else if (buttons.getGreen()) {
-    stoplight.set(Stoplight::SL_GREEN);
-  } else if (buttons.getRed()) {
-    stoplight.set(Stoplight::SL_RED);
-  } else {
-    stoplight.set(Stoplight::SL_OFF);
-  }
-
-  unsigned long time = millis();
-  int seconds = time / 1000;
-  bool showColon = (time / 500) % 2;
-  display.formatTime(seconds, showColon);
-
-#else
-  float batt = getBatteryVoltage();
-  Serial.println(batt);
-  display.print(batt);
-  display.writeDisplay();
-
-
-  switch (count++ % 4) {
-    case 0:
-      stoplight.set(Stoplight::SL_OFF);
-      break;
-    case 1:
-      stoplight.set(Stoplight::SL_RED);
-      break;
-    case 2:
-      stoplight.set(Stoplight::SL_YELLOW);
-      break;
-    case 3:
-      stoplight.set(Stoplight::SL_GREEN);
-      break;
-  }
-#endif
 
   delay(50);
 }
