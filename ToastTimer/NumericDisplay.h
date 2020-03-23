@@ -7,16 +7,15 @@
 #include <Adafruit_GFX.h>
 #include "Adafruit_LEDBackpack.h"
 
-class NumericDisplay {
-
-    Adafruit_7segment matrix = Adafruit_7segment();
+class NumericDisplay : public Adafruit_7segment {
 
   public:
     void begin() {
       // 7-seg matrix
-      matrix.begin(0x70);
+      Adafruit_7segment::begin(0x70);
     }
 
+#if 0
     void print(float val) {
       matrix.print(val);
       matrix.writeDisplay();
@@ -27,7 +26,6 @@ class NumericDisplay {
       matrix.writeDisplay();
     }
 
-#if 0
     // print with print/println
     for (uint16_t counter = 0; counter < 9999; counter++) {
       matrix.println(counter);

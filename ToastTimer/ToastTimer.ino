@@ -11,7 +11,7 @@
 #include "Stoplight.h"
 
 Buttons buttons;
-NumericDisplay display;
+NumericDisplay display = NumericDisplay();
 Stoplight stoplight;
 
 void setup() {
@@ -26,12 +26,15 @@ int count = 0;
 
 void loop() {
 
+#if 0
+
+#else
   float batt = getBatteryVoltage();
   Serial.println(batt);
   display.print(batt);
-  delay(500);
+  display.writeDisplay();
 
-#if 1
+
   switch (count++ % 4) {
     case 0:
       stoplight.set(Stoplight::SL_OFF);
@@ -48,4 +51,5 @@ void loop() {
   }
 #endif
 
+  delay(50);
 }
