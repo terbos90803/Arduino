@@ -32,15 +32,15 @@ class Stoplight {
 
       switch (state) {
         case SL_RED:
-          strip.fill(strip.Color(255, 0, 0), 5, 3);
+          strip.fill(strip.Color(255, 0, 0), 0, 7);
           break;
 
         case SL_YELLOW:
-          strip.fill(strip.Color(255, 255, 0), 3, 2);
+          strip.fill(strip.Color(255, 255, 0), 0, 7);
           break;
 
         case SL_GREEN:
-          strip.fill(strip.Color(0, 255, 0), 0, 3);
+          strip.fill(strip.Color(0, 255, 0), 0, 7);
           break;
       }
       strip.show();
