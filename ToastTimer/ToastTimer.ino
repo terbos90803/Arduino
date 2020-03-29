@@ -45,6 +45,9 @@ void loop() {
       // - Green button resets and starts timer
       // - Red button checks battery
 
+      speeches[spIx]->display(display);
+      stoplight.set(Stoplight::SL_OFF);
+
       if (buttons.getRed()) {
         float batt = getBatteryVoltage();
         display.print(batt);
@@ -58,8 +61,6 @@ void loop() {
           timer.reset();
           timer.start();
         }
-        speeches[spIx]->display(display);
-        stoplight.set(Stoplight::SL_OFF);
       }
       break;
 
