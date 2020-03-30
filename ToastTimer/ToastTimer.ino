@@ -31,6 +31,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println("ToastTimer v1.0");
 
+  buttons.begin();
   display.begin();
   stoplight.begin();
 }
@@ -45,7 +46,6 @@ void loop() {
       // - Green button resets and starts timer
       // - Red button checks battery
 
-      speeches[spIx]->display(display);
       stoplight.set(Stoplight::SL_OFF);
 
       if (buttons.getRed()) {
@@ -61,6 +61,7 @@ void loop() {
           timer.reset();
           timer.start();
         }
+        speeches[spIx]->display(display);
       }
       break;
 

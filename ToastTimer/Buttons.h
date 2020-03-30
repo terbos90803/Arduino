@@ -8,7 +8,7 @@ class Buttons {
     bool redPressed = false;
 
   public:
-    Buttons() {
+    void begin() {
       pinMode(grayPin, INPUT_PULLUP);
       pinMode(greenPin, INPUT_PULLUP);
       pinMode(redPin, INPUT_PULLUP);
