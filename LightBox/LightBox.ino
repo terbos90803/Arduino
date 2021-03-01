@@ -12,12 +12,14 @@
   any redistribution
 *********************************************************************/
 
+#include "pixels.h"
+
 #include <Adafruit_NeoPixel.h>
 
 #define PIN 12 // Pin where NeoPixels are connected
 
 // Declare our NeoPixel strip object:
-Adafruit_NeoPixel strip(120, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip(numPixels, PIN, NEO_GRB + NEO_KHZ800);
 // Argument 1 = Number of pixels in NeoPixel strip
 // Argument 2 = Arduino pin number (most are valid)
 // Argument 3 = Pixel type flags, add together as needed:
