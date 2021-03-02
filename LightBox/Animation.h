@@ -11,13 +11,13 @@ class Animation {
         int y = pixels[i].y;
         uint32_t color = getColor(x, y);
         strip.setPixelColor(i, strip.gamma32(color));
-        Serial.print("animation.display()=");
-        Serial.print(i);
-        Serial.print(", ");
-        Serial.println(color);
+//        Serial.print("animation.display()=");
+//        Serial.print(i);
+//        Serial.print(", ");
+//        Serial.println(color);
       }
       strip.show();
-      Serial.println(++frame);
+//      Serial.println(++frame);
     }
 
   protected:
@@ -26,9 +26,9 @@ class Animation {
       uint32_t g = (c1 >> 8 & 0xff) + (c2 >> 8 & 0xff);
       uint32_t b = (c1 & 0xff) + (c2 & 0xff);
 
-      r = r < 0xff ? 0xff : r;
-      g = g < 0xff ? 0xff : g;
-      b = b < 0xff ? 0xff : b;
+      r = r > 0xff ? 0xff : r;
+      g = g > 0xff ? 0xff : g;
+      b = b > 0xff ? 0xff : b;
 
       return (r << 16) | (g << 8) | (b);
     }

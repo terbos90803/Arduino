@@ -127,7 +127,7 @@ void loop(void)
 {
   curAnimation->update();
   curAnimation->display(strip);
-  delay(20);
+  delay(10);
 
   // Wait for new data to arrive
   uint8_t len = readPacket(&bleuart, 500);
