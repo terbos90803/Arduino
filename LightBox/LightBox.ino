@@ -46,6 +46,17 @@ void    printHex   (const uint8_t * data, const uint32_t numBytes);
 // Packet buffer
 extern uint8_t packetbuffer[];
 
+
+// Animations
+#include "Animation.h"
+#include "LavaLamp.h"
+
+Animation * animations[] = {
+  &lavalamp
+};
+const int numAnimations = sizeof(animations) / sizeof(Animation*);
+Animation * curAnimation = animations[0];
+
 void setup(void)
 {
   strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
@@ -73,6 +84,10 @@ void setup(void)
   Serial.println(F("Please use Adafruit Bluefruit LE app to connect in Controller mode"));
   Serial.println(F("Then activate/use the sensors, color picker, game controller, etc!"));
   Serial.println();
+
+  for (Animation *a : animations) {
+    a->begin();
+  }
 }
 
 void startAdv(void)
@@ -110,6 +125,10 @@ void startAdv(void)
 /**************************************************************************/
 void loop(void)
 {
+  curAnimation->update();
+  curAnimation->display(strip);
+  delay(20);
+
   // Wait for new data to arrive
   uint8_t len = readPacket(&bleuart, 500);
   if (len < 2) return;
