@@ -61,7 +61,7 @@ Animation * curAnimation = animations[0];
 
 const int framerate = 20;
 const int msperframe = 1000 / framerate;
-int lastframe = 0; // when the last frame happened
+int frametime = 0; // when the last frame happened
 
 void setup(void)
 {
@@ -135,10 +135,14 @@ void loop(void)
   curAnimation->display(strip);
 
   uint32_t now = millis();
-  int extratime = now - lastframe;
-  lastframe = now;
-  if (extratime < 0)
-    return;
+  frametime += msperframe; // increment the frame time to the expected end of this interval
+  int extratime = frametime - now;
+  if (extratime < 0 || extratime > msperframe) {
+    // We're late. (or so early that something is clearly wrong)
+    // reset the frame time to now so we don't keep building debt.
+    frametime = now;
+    extratime = 0;
+  }
 
   // Wait for new data to arrive
   uint8_t len = readPacket(&bleuart, extratime);
