@@ -50,12 +50,18 @@ extern uint8_t packetbuffer[];
 // Animations
 #include "Animation.h"
 #include "LavaLamp.h"
+#include "Raindrops.h"
 
 Animation * animations[] = {
-  &lavalamp
+  &lavalamp,
+  &raindrops
 };
 const int numAnimations = sizeof(animations) / sizeof(Animation*);
 Animation * curAnimation = animations[0];
+
+const int framerate = 20;
+const int msperframe = 1000 / framerate;
+int lastframe = 0; // when the last frame happened
 
 void setup(void)
 {
@@ -127,10 +133,15 @@ void loop(void)
 {
   curAnimation->update();
   curAnimation->display(strip);
-  delay(10);
+
+  uint32_t now = millis();
+  int extratime = now - lastframe;
+  lastframe = now;
+  if (extratime < 0)
+    return;
 
   // Wait for new data to arrive
-  uint8_t len = readPacket(&bleuart, 500);
+  uint8_t len = readPacket(&bleuart, extratime);
   if (len < 2) return;
 
   // Got a packet!
@@ -162,9 +173,11 @@ void loop(void)
         switch (packetbuffer[2]) {
           case '1':
             colorWipe(strip.Color(255, 0, 0), 20); // Red
+            curAnimation = animations[0];
             break;
           case '2':
             colorWipe(strip.Color(0, 255, 0), 20); // Green
+            curAnimation = animations[1];
             break;
           case '3':
             colorWipe(strip.Color(0, 0, 255), 20); // Blue

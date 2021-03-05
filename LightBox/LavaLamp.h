@@ -11,9 +11,9 @@ class LavaLamp : public Animation
         const float blobRadius;
         const float blobRadius2;
         const float kT; // = 0.05;
-        const uint32_t blobColor = 0xff0000;
-        const uint32_t bkgColor = 0x000000;
+        const uint16_t bkgColor = 0;
 
+        uint16_t blobHue;
         float blobx;
         float blobxv;
         float bloby = height;
@@ -21,10 +21,13 @@ class LavaLamp : public Animation
         float blobTemp = 50;
 
       public:
-        Blob(int x, int r) : blobRadius(r), blobRadius2(r * r), kT(5.0 / blobRadius2) {
-          blobx = x;
-          blobxv = (float)x / (20 * width);
-        }
+        Blob(uint16_t hue, int x, int r) : 
+          blobHue(hue), 
+          blobx(x),
+          blobxv((float)x / (20 * width)),
+          blobRadius(r), 
+          blobRadius2(r * r), kT(5.0 / blobRadius2)
+        {}
 
         void move()
         {
@@ -60,14 +63,17 @@ class LavaLamp : public Animation
           float dsq = dx * dx + dy * dy; // work in squared space to avoid a sqrt.
 
           // calc the distance from the pixel to the blob
-          return dsq <= blobRadius2 ? blobColor : bkgColor;
+          int v = 255 * (blobRadius2 - dsq) / blobRadius2;
+          if (v < 0)
+            v = 0;
+          return strip.ColorHSV(blobHue, 255, v);
         }
     };
-    Blob b0{5, 5};
-    Blob b1{25, 12};
-    Blob b2{50, 10};
-    Blob b3{75, 15};
-    Blob b4{90, 8};
+    Blob b0{0*65536/5, 5, 5};
+    Blob b1{1*65536/5, 25, 12};
+    Blob b2{2*65536/5, 50, 10};
+    Blob b3{3*65536/5, 75, 15};
+    Blob b4{4*65536/5, 90, 8};
     Blob * blobs[5] = {&b0, &b1, &b2, &b3, &b4};
 
   public:
