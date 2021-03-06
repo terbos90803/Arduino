@@ -69,11 +69,11 @@ class LavaLamp : public Animation
           return strip.ColorHSV(blobHue, 255, v);
         }
     };
-    Blob b0{0*65536/5, 5, 5};
-    Blob b1{1*65536/5, 25, 12};
-    Blob b2{2*65536/5, 50, 10};
-    Blob b3{3*65536/5, 75, 15};
-    Blob b4{4*65536/5, 90, 8};
+    Blob b0{0*65536/5, 5, 10};
+    Blob b1{1*65536/5, 25, 17};
+    Blob b2{2*65536/5, 50, 12};
+    Blob b3{3*65536/5, 75, 20};
+    Blob b4{4*65536/5, 90, 15};
     Blob * blobs[5] = {&b0, &b1, &b2, &b3, &b4};
 
   public:

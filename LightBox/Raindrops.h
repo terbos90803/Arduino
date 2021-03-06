@@ -25,7 +25,7 @@ class Raindrops : public Animation
       // calc the distance from the pixel to the ring
       float diff = abs(dsq - radsq); // difference in radii squared
       //float diff = abs(d - rad); // difference in radii
-      float val = 255 - diff/3; // The ring is full brightness.  brightness falls off further from the ring.
+      float val = 255 - diff/5; // The ring is full brightness.  brightness falls off further from the ring.
       float b = val > 0 ? val : 0; // clip to avoid negative values
 
       return strip.ColorHSV(43690, 255, b); // 43690 = 240*65536/360 = blue

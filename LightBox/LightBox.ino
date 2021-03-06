@@ -59,7 +59,7 @@ Animation * animations[] = {
 const int numAnimations = sizeof(animations) / sizeof(Animation*);
 Animation * curAnimation = animations[0];
 
-const int framerate = 20;
+const int framerate = 15;
 const int msperframe = 1000 / framerate;
 int frametime = 0; // when the last frame happened
 
