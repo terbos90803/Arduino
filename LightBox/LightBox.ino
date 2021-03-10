@@ -49,19 +49,22 @@ extern uint8_t packetbuffer[];
 
 // Animations
 #include "Animation.h"
+#include "Raster.h"
 #include "LavaLamp.h"
 #include "Raindrops.h"
+#include "Heart.h"
 
 Animation * animations[] = {
   &lavalamp,
-  &raindrops
+  &raindrops,
+  &heart
 };
 const int numAnimations = sizeof(animations) / sizeof(Animation*);
 Animation * curAnimation = animations[0];
 
 const int framerate = 15;
 const int msperframe = 1000 / framerate;
-int frametime = 0; // when the last frame happened
+uint32_t frametime = 0; // when the last frame happened
 
 void setup(void)
 {
@@ -185,6 +188,7 @@ void loop(void)
             break;
           case '3':
             colorWipe(strip.Color(0, 0, 255), 20); // Blue
+            curAnimation = animations[2];
             break;
           case '4':
             theaterChase(strip.Color(255, 0, 0), 20); // Red

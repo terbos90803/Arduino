@@ -3,15 +3,15 @@ class Raindrops : public Animation
     int frame = 0;
 
   public:
-    virtual void begin() {
+    virtual void begin() override {
       Serial.println("raindrops.begin()");
     }
 
-    virtual void update() {
+    virtual void update() override {
       ++frame;
     }
 
-    virtual uint32_t getColor(int x, int y) {
+    virtual uint32_t getColor(int x, int y) override {
       // calc the distance from the pixel to the ring center
       float dx = x - 50;
       float dy = y - 50;

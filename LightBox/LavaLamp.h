@@ -77,17 +77,17 @@ class LavaLamp : public Animation
     Blob * blobs[5] = {&b0, &b1, &b2, &b3, &b4};
 
   public:
-    virtual void begin() {
+    virtual void begin() override {
       Serial.println("lavalamp.begin()");
     }
 
-    virtual void update() {
+    virtual void update() override {
       for (Blob * blob : blobs) {
         blob->move();
       }
     }
 
-    virtual uint32_t getColor(int x, int y) {
+    virtual uint32_t getColor(int x, int y) override {
       uint32_t color = 0;
       for (Blob * blob : blobs) {
         color = blend(color, blob->getPixel(x, y));
