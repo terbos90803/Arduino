@@ -49,7 +49,6 @@ extern uint8_t packetbuffer[];
 
 // Animations
 #include "Animation.h"
-#include "Raster.h"
 #include "LavaLamp.h"
 #include "Raindrops.h"
 #include "Heart.h"
