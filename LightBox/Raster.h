@@ -1,11 +1,16 @@
 // Implement an animation with a raster-based source
 #pragma once
 
+#include "Matrix.h"
+
 class Raster : public Animation
 {
+    static constexpr int width1 = width - 1;
+    static constexpr int height1 = height - 1;
+    
   protected:
-    uint32_t raster[100][100] = {0};
-    float transform[3][2] = {{1, 0}, {0, 1}, {0, 0}};
+    uint32_t raster[width][height] = {0};
+    Matrix m;
 
     uint32_t & getPixelSafe(float xf, float yf)
     {
@@ -13,15 +18,15 @@ class Raster : public Animation
 
       if (xf < 0.0f)
         x = 0;
-      else if (xf > 99.0f)
-        x = 99;
+      else if (xf > width1)
+        x = width1;
       else
         x = round(xf);
 
       if (yf < 0.0f)
         y = 0;
-      else if (yf > 99.0f)
-        y = 99;
+      else if (yf > height1)
+        y = height1;
       else
         y = round(yf);
 
@@ -30,10 +35,9 @@ class Raster : public Animation
 
   private:
     // Display the transformed raster
-    virtual uint32_t getColor(int x, int y) override {
-      float xt = x * transform[0][0] + y * transform[1][0] + transform[2][0];
-      float yt = x * transform[0][1] + y * transform[1][1] + transform[2][1];
-      return bilerpColor(xt, yt);
+    virtual uint32_t getColor(const Pixel &p) override {
+      Pixel pt = m.transform(p);
+      return bilerpColor(pt.x, pt.y);
     }
 
     // interpolate a single byte in the color

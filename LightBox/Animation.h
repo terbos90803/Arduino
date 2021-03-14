@@ -1,34 +1,47 @@
 class Animation {
-    int frame = 0;
+    static constexpr uint8_t max_byte = 0xff;
+    static constexpr uint32_t max_power = numPixels * 3 * max_byte;
+    static constexpr uint32_t power_limit = 25000;
+    static constexpr float max_brightness = 1.0f;
+    static constexpr float min_brightness = (float)power_limit / max_power;
+    static constexpr float scale = (min_brightness - max_brightness) / (max_power - power_limit);
 
+    virtual uint32_t getColor(const Pixel &p) = 0;
+
+    inline uint32_t rgb_power(uint32_t color) {
+      return ((color >> 16) & 0xff) + ((color >> 8) & 0xff) + (color & 0xff);
+    }
+
+    inline uint8_t calcBrightness(uint32_t power) {
+      if (power <= power_limit)
+        return max_byte;
+        
+      // Calculate the strip brightness in order to limit the max power
+      int b = ((power - power_limit) * scale + max_brightness) * max_byte;
+      if (b < 0)
+        return 0;
+      else if (b > max_byte)
+        return max_byte;
+      return b;
+    }
+    
   public:
     virtual void begin() = 0;
     virtual void update() = 0;
 
     void display(Adafruit_NeoPixel &strip) {
+      uint32_t power = 0;
       for (int i = 0; i < strip.numPixels(); ++i) {
-        int x = pixels[i].x;
-        int y = pixels[i].y;
-        uint32_t color = getColor(x, y);
-        strip.setPixelColor(i, strip.gamma32(color));
+        uint32_t color = strip.gamma32(getColor(pixels[i]));
+        power += rgb_power(color);
+        strip.setPixelColor(i, color);
       }
+      auto b = calcBrightness(power);
+      strip.setBrightness(b);
       strip.show();
     }
 
   protected:
-#if 0
-    uint32_t blend(uint32_t c1, uint32_t c2) {
-      uint32_t r = (c1 >> 16 & 0xff) + (c2 >> 16 & 0xff);
-      uint32_t g = (c1 >> 8 & 0xff) + (c2 >> 8 & 0xff);
-      uint32_t b = (c1 & 0xff) + (c2 & 0xff);
-
-      r = r > 0xff ? 0xff : r;
-      g = g > 0xff ? 0xff : g;
-      b = b > 0xff ? 0xff : b;
-
-      return (r << 16) | (g << 8) | (b);
-    }
-#else
     uint32_t blend(uint32_t c1, uint32_t c2) {
       uint32_t r = (c1 & 0xff0000) + (c2 & 0xff0000);
       uint32_t g = (c1 & 0x00ff00) + (c2 & 0x00ff00);
@@ -40,8 +53,4 @@ class Animation {
 
       return r | g | b;
     }
-#endif
-
-  private:
-    virtual uint32_t getColor(int x, int y) = 0;
 };

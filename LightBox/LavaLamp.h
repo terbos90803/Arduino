@@ -55,11 +55,11 @@ class LavaLamp : public Animation
           }
         }
 
-        uint32_t getPixel(int x, int y)
+        uint32_t getPixel(const Pixel &p)
         {
           // calc the distance from the pixel to the blob center
-          float dx = x - blobx;
-          float dy = y - bloby;
+          float dx = p.x - blobx;
+          float dy = p.y - bloby;
           float dsq = dx * dx + dy * dy; // work in squared space to avoid a sqrt.
 
           // calc the distance from the pixel to the blob
@@ -87,10 +87,10 @@ class LavaLamp : public Animation
       }
     }
 
-    virtual uint32_t getColor(int x, int y) override {
+    virtual uint32_t getColor(const Pixel &p) override {
       uint32_t color = 0;
       for (Blob * blob : blobs) {
-        color = blend(color, blob->getPixel(x, y));
+        color = blend(color, blob->getPixel(p));
       }
       return color;
     }

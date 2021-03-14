@@ -1,10 +1,7 @@
 constexpr int width = 100;
 constexpr int height = 100;
 
-struct Pixel {
-  int x;
-  int y;
-};
+#include "Pixel.h"
 
 const Pixel pixels[] = {
 {60,45},

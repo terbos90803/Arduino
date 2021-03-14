@@ -11,10 +11,10 @@ class Raindrops : public Animation
       ++frame;
     }
 
-    virtual uint32_t getColor(int x, int y) override {
+    virtual uint32_t getColor(const Pixel &p) override {
       // calc the distance from the pixel to the ring center
-      float dx = x - 50;
-      float dy = y - 50;
+      float dx = p.x - 50;
+      float dy = p.y - 50;
       float dsq = dx * dx + dy * dy; // work in squared space to avoid a sqrt.  Also gives a nice fade effect.
       //float d = sqrt(dsq);
 

@@ -12,9 +12,12 @@ class Heart : public Raster
       Serial.println("heart.begin()");
 
       for (float t = -M_PI; t <= M_PI; t += step) {
-        float x1 = cos(t);
-        float y1 = -sin(t);
-        float r = 20 * (sin(t)*sqrt(abs(cos(t))) / (sin(t) + 7.0f/5.0f) - 2.0f*sin(t) + 2.0f);
+        float ct = cosf(t);
+        float st = sinf(t);
+        
+        float x1 = ct;
+        float y1 = -st;
+        float r = 20 * (st*sqrtf(abs(ct)) / (st + 7.0f/5.0f) - 2.0f*st + 2.0f);
         for (float ri = 0; ri <= r; ri += 1.0) {
           float x = x1 * ri + 50;
           float y = y1 * ri + 20;
@@ -24,6 +27,10 @@ class Heart : public Raster
     }
 
     virtual void update() override {
+      frame = (frame + 1) % 100;
+      if (frame == 0)
+        m.reset();
+      m.scale(1.01);
     }
 
 } heart;
