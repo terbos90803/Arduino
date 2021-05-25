@@ -1,12 +1,16 @@
 class Raindrops : public Animation
 {
-    static constexpr int numDrops = 5;
+    static constexpr int numDrops = 3;
+    static constexpr float rate = 1.5;
+    static constexpr float ring_width = 5.0;
+    static constexpr int percent_new_ring = 3;
 
     class Drop
     {
-        static constexpr float rate = 1.0;
         float radius;
         Pixel center;
+        float r1, r2, r3, r4;
+        uint16_t hue;
 
       public:
         bool active {false};
@@ -15,14 +19,26 @@ class Raindrops : public Animation
           center.x = random(10, 90);
           center.y = random(10, 90);
           radius = 0;
+          hue = random(120, 240) * 65536 / 360; // 120=green, 240=blue
           active = true;
         }
 
         void grow() {
           if (active) {
             radius += rate;
-            if (radius > 200)
+            if (radius > 150)
               active = false;
+
+            // pre-calc two radii in square space
+            float r = radius;
+            r1 = r * r;
+            r = max(r - ring_width, 0.0);
+            r2 = r * r;
+            r = max(r - ring_width, 0.0);
+            r = max(r - ring_width, 0.0);
+            r3 = r * r;
+            r = max(r - ring_width, 0.0);
+            r4 = r * r;
           }
         }
 
@@ -33,23 +49,18 @@ class Raindrops : public Animation
           // calc the distance from the pixel to the ring center
           float dx = p.x - center.x;
           float dy = p.y - center.y;
-          float dsq = dx * dx + dy * dy; // work in squared space to avoid a sqrt.  Also gives a nice fade effect.
-          //float d = sqrt(dsq);
-
-          // calc the size of the ring based on the size (gives animation)
-          float radsq = radius * radius;
+          float dsq = dx * dx + dy * dy; // work in squared space to avoid a sqrt.
 
           // calc the distance from the pixel to the ring
-          float diff = abs(dsq - radsq); // difference in radii squared
-          //float diff = abs(d - radius); // difference in radii
-          float val = 255 - diff / 5; // The ring is full brightness.  brightness falls off further from the ring.
-          float b = val > 0 ? val : 0; // clip to avoid negative values
+          float b = 0.0;
+          if (r3 < dsq && dsq < r2)
+            b = 255.0;
+          else if (r4 < dsq && dsq < r1)
+            b = 128.0;
 
-          return strip.ColorHSV(43690, 255, b); // 43690 = 240*65536/360 = blue
+          return strip.ColorHSV(hue, 255, b); // 43690 = 240*65536/360 = blue
         }
     } drops[numDrops];
-
-    int nextDrop = 0;
 
   public:
     virtual void begin() override {
@@ -57,9 +68,12 @@ class Raindrops : public Animation
     }
 
     virtual void update() override {
-      if (random(100) < 2) {
-        drops[nextDrop].start();
-        nextDrop = (nextDrop + 1) % numDrops;
+      if (random(100) < percent_new_ring) {
+        for (Drop &d : drops)
+          if (!d.active) {
+            d.start();
+            break;
+          }
       }
       for (Drop &d : drops) {
         d.grow();
