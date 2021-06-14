@@ -60,6 +60,10 @@ Animation * animations[] = {
 };
 const int numAnimations = sizeof(animations) / sizeof(Animation*);
 Animation * curAnimation = animations[0];
+bool cycleAnimations = true;
+int animationIx = 0;
+uint32_t cycleRate = 60 * 1000; // 1 minute
+uint32_t cycleTime = millis() + cycleRate;
 
 const int framerate = 15;
 const int msperframe = 1000 / framerate;
@@ -144,6 +148,12 @@ void loop(void)
     // reset the frame time to now so we don't keep building debt.
     frametime = now;
     extratime = 0;
+  }
+
+  if (cycleAnimations && (int32_t)(now - cycleTime) > 0) {
+    animationIx = (animationIx + 1) % numAnimations;
+    curAnimation = animations[animationIx];
+    cycleTime = now + cycleRate;
   }
 
   // Wait for new data to arrive
