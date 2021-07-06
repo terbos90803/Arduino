@@ -52,11 +52,13 @@ extern uint8_t packetbuffer[];
 #include "LavaLamp.h"
 #include "Raindrops.h"
 #include "Heart.h"
+#include "Stars.h"
 
 Animation * animations[] = {
   &lavalamp,
   &raindrops,
-  &heart
+  &heart,
+  &stars
 };
 const int numAnimations = sizeof(animations) / sizeof(Animation*);
 Animation * curAnimation = animations[0];
@@ -201,6 +203,7 @@ void loop(void)
             break;
           case '4':
             theaterChase(strip.Color(255, 0, 0), 20); // Red
+            curAnimation = animations[3];
             break;
           case '5':
             theaterChase(strip.Color(0, 255, 0), 20); // Green
