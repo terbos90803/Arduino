@@ -1,9 +1,9 @@
 class Stars : public Animation
 {
-    static constexpr int numStars = 20;
+    static constexpr int numStars = 5;
     static constexpr float source_radius = 10.0;
-    static constexpr float accel = 0.01;
-    static constexpr float radius = 7.0;
+    static constexpr float accel = 0.07;
+    static constexpr float radius = 12.0;
     static constexpr float rsq = radius * radius;
 
     class Star
@@ -56,11 +56,11 @@ class Stars : public Animation
           float dsq = dx * dx + dy * dy; // work in squared space to avoid a sqrt.
 
           // calc the distance from the pixel to the ring
-          float b = 0.0;
-          if (dsq < rsq)
-            b = 255.0;
+          float b = 255.0 * (rsq - dsq) / rsq;
+          if (b < 0.0)
+            b = 0.0;
 
-          return strip.ColorHSV(hue, 64, b);
+          return strip.ColorHSV(hue, 100, b);
         }
     } stars[numStars];
 

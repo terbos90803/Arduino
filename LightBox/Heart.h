@@ -6,8 +6,8 @@ class Heart : public Raster
     const float step = M_PI/360;
     const uint32_t color = 0xff9afe;
     Matrix r1, r2;
-    float scale=1.0, grow=0.1;
-    float rot=0.0, spin=0.1;
+    float scale=1.0, grow_rate=0.1, grow = grow_rate;
+    float rot=0.0, spin=0.0; //0.1;
 
   public:
     virtual void begin() override {
@@ -33,9 +33,9 @@ class Heart : public Raster
 
     virtual void update() override {
       if (scale < 1.0)
-        grow = 0.02;
+        grow = grow_rate;
       else if (scale > 4.0)
-        grow = -0.02;
+        grow = -grow_rate;
       scale += grow;
 
       rot += spin;
